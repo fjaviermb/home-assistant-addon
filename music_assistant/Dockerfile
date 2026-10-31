@@ -7,6 +7,9 @@ FROM ghcr.io/music-assistant/server:nightly
 ENV VIRTUAL_ENV=/app/venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
+ENV REQUESTS_CA_BUNDLE="/mnt/data/supervisor/ssl/navidrome.pem.crt"
+ENV DEV_VER="1"
+
 # ensure UV is installed
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
