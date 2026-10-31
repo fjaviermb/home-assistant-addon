@@ -1,5 +1,5 @@
 {
     "name": "Music Assistant (testing addon)",
-    "url": "https://github.com/music-assistant/core",
-    "maintainer": "Music Assistant Custom"
+    "url": "https://github.com/fjaviermb/home-assistant-addon",
+    "maintainer": "Music Assistant Addon Custom"
   }
