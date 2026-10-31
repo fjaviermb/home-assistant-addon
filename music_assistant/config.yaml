@@ -1,9 +1,8 @@
-name: Music Assistant
-version: 2.10.9
-slug: music_assistant
-description:
-  The Music Assistant server is a free, opensource Media library manager
-  that connects to your streaming services and a wide range of connected speakers.
+name: Music Assistant DEV SERVER
+# tracks the nightly base image; bumped by the server release workflow
+version: 2.11.0.dev2026103104
+slug: music_assistant_dev
+description: Development App for Music Assistant. For developers only.
 url: https://music-assistant.io
 arch:
   - amd64
@@ -27,20 +26,20 @@ map:
   - media:rw
   - ssl:ro
 init: false
+stage: experimental
+tmpfs: true
 backup_exclude:
   - cache.db
   - collage_images/*
   - .cache/*
   - library.db.backup
-stage: stable
-image: ghcr.io/music-assistant/server
-tmpfs: true
 options:
   log_level: info
+  server_repo: ""
+  frontend_repo: ""
   safe_mode: false
 schema:
   log_level: list(debug|info|warning|error)
+  server_repo: str?
+  frontend_repo: str?
   safe_mode: bool
-privileged:
-  - SYS_ADMIN
-  - DAC_READ_SEARCH

@@ -1,140 +1,235 @@
-# Music Assistant App
+# Music Assistant DEV App
 
-The official Music Assistant App for Home Assistant.
+This is a special development App for Music Assistant that allows developers to quickly test specific branches, pull requests, or even forks of Music Assistant directly in Home Assistant.
 
-## About Music Assistant
+## Purpose
 
-Music Assistant is a free, open-source music library manager that connects to your streaming services and a wide range of connected speakers. Turn your Home Assistant instance into your own personal music streaming hub!
+This App is designed for:
 
-## Features
+- Testing pull requests before merging
+- Developing and debugging new features
+- Testing forks of Music Assistant
+- Running custom branches for testing
 
-- 🎵 **Multi-source Music Library**: Connect Spotify, YouTube Music, Qobuz, Tidal, and more
-- 🔊 **Universal Player Support**: Works with Sonos, Chromecast, AirPlay, DLNA, Squeezebox, and many more
-- 🎶 **Unified Library**: All your music from different sources in one place
-- 🎯 **Smart Playback**: Gapless playback, crossfading, and audio normalization
-- 📱 **Beautiful Interface**: Modern web interface accessible through Home Assistant
-- 🏠 **Home Assistant Integration**: Full integration with Home Assistant's media player platform
+## How It Works
 
-## Installation
+Unlike the regular Music Assistant App which uses pre-built releases, this Dev App:
 
-1. Navigate to **Settings** → **Apps** → **App Store** in Home Assistant
-2. Search for "Music Assistant"
-3. Click **Install**
-4. Wait for the installation to complete
-5. Click **Start**
-6. Open the **Web UI** to set up Music Assistant
+1. Builds and installs the server from a specified Git source (branch, PR, or fork)
+2. Builds and installs the frontend from a specified Git source (branch, PR, or fork)
+3. Starts Music Assistant with your custom code
+
+The build process:
+
+1. Installs the server package from the specified Git reference
+2. Builds the frontend with the package manager detected from its lockfile (pnpm, yarn, or npm)
+3. Installs the frontend as a Python package (overwriting the default frontend)
+4. Starts Music Assistant
+
+The App image is built on top of the nightly server image, so the dependency set, the bundled
+app variables and the cliairplay binary are already in place. Installing a branch only has to
+apply what actually differs from that nightly.
 
 ## Configuration
 
-### Available Options
+### Basic Configuration
 
 ```yaml
 log_level: info
 safe_mode: false
 ```
 
-#### log_level
+### Server Repository Configuration
 
-Set the (global) logging level:
+Use the `server_repo` option to specify which version of the Music Assistant server to install:
 
-- `error`: Only show errors
-- `warning`: Show warnings and errors
-- `info`: Normal logging (recommended)
-- `debug`: Detailed logging for troubleshooting
+**Format**: `owner/repo@reference` or just `reference`
 
-**Default**: `info`
+- **Branch**: `dev`, `main`, or any branch name, including one with a slash like `feature/new-player`
+- **Pull Request**: `pr-123` (will checkout PR #123)
+- **Fork**: `username/server@branch-name`, or `username/server` to use that fork's default branch
+- **Commit**: Full commit SHA
+- **Empty/blank**: Use the nightly build baked into the App image (fast mode - no install required)
 
-**Recommendation**: Consider using `debug` level only to troubleshoot any issues.
-Best to keep the global setting set to just `info`.
+**Examples**:
 
-TIP: Within Music Assistant, each provider allows you to override the log level.
+```yaml
+# Use the nightly build from the App image (FAST - no install required)
+server_repo: ""
 
-#### safe_mode
+# Use the dev branch
+server_repo: dev
 
-When enabled, Music Assistant starts without loading any providers. This is useful for troubleshooting startup issues or provider-related problems.
+# Use a specific branch
+server_repo: feature/new-player
 
-**Default**: `false`
+# Test a pull request
+server_repo: pr-456
 
-## Getting Started
+# Test a fork
+server_repo: someuser/server@experimental-feature
 
-1. After starting the App, click **Open Web UI**
-2. Follow the onboarding wizard to set up your first music provider
-3. Connect your speakers/players
-4. Start enjoying your music!
+# Use a specific commit
+server_repo: abc123def456...
+```
 
-### Optional: Home Assistant Integration
+**Default**: `""` (empty - uses the nightly build baked into the App image)
 
-For advanced automation and control, you can optionally install the **Music Assistant integration** in Home Assistant. This integration allows you to:
+> **Note**: When `server_repo` is left empty or blank, the App runs the nightly build that is already installed in its image, so nothing is downloaded at startup. Rebuild the App to move to a newer nightly.
 
-- 🤖 **Automate music playback** from Home Assistant automations and scripts
-- 🎛️ **Control playback** using Home Assistant services
-- 📊 **Access player states** and attributes in your dashboards
-- 🎵 **Use Music Assistant** in your Home Assistant scenes and routines
+### Frontend Repository Configuration
 
-**To install the integration:**
+Use the `frontend_repo` option to specify which version of the Music Assistant frontend to install:
 
-The Music Assistant server should be auto detected by Home Assistant once you install the App (or any Music Assistant server in your network). On the Devices & services page, you should be greeted with a card for the discovered server to simply set up the integration.
+**Format**: Same as server_repo - `owner/repo@reference` or just `reference`
 
-**Note**: The App provides the Music Assistant server, while the integration provides the Home Assistant entities and automation capabilities. The App works perfectly fine without the integration if you only want to use the web interface.
+- **Branch**: `main`, `dev`, or any branch name, including one with a slash like `feature/new-ui`
+- **Pull Request**: `pr-789` (will checkout PR #789)
+- **Fork**: `username/frontend@branch-name`, or `username/frontend` to use that fork's default branch
+- **Commit**: Full commit SHA
+- **Empty/blank**: Skip frontend build (use bundled frontend)
 
-## Documentation
+**Examples**:
 
-For detailed documentation, visit:
+```yaml
+# Skip frontend build (FAST - use bundled frontend)
+frontend_repo: ""
 
-- 📖 [Official Documentation](https://music-assistant.io)
-- 💬 [Community Discussions](https://github.com/orgs/music-assistant/discussions)
-- 🐛 [Support & Issue Tracker](https://github.com/music-assistant/support)
-- 💭 [Discord Server](https://discord.gg/PZQ6RWbfeS)
+# Use the main branch
+frontend_repo: main
+
+# Use a specific branch
+frontend_repo: feature/new-ui
+
+# Test a pull request
+frontend_repo: pr-789
+
+# Test a fork
+frontend_repo: someuser/frontend@redesign
+
+# Use a specific commit
+frontend_repo: abc123def456...
+```
+
+**Default**: `""` (empty - uses bundled frontend, no build)
+
+> **Note**: When `frontend_repo` is left empty or blank, the frontend build will be **skipped entirely**. This significantly reduces startup time and is ideal when you only need to test backend features. The frontend bundled with the server installation will be used instead.
+
+## Full Configuration Examples
+
+### Fast Mode (Backend Testing Only)
+```yaml
+log_level: info
+safe_mode: false
+server_repo: ""
+frontend_repo: ""
+```
+Runs the nightly build from the App image, no installs required. Fastest startup time.
+
+### Backend Development Mode
+```yaml
+log_level: debug
+safe_mode: false
+server_repo: dev
+frontend_repo: ""
+```
+Builds server from the `dev` branch, skips frontend build. Good for testing backend changes quickly.
+
+### Full Development Mode
+```yaml
+log_level: debug
+safe_mode: false
+server_repo: pr-456
+frontend_repo: pr-789
+```
+Builds both server (PR #456) and frontend (PR #789) from source. Full control for comprehensive testing.
+
+## Important Notes
+
+### Build Time
+
+Build time varies depending on your configuration:
+- **Both empty** (`server_repo: ""` and `frontend_repo: ""`): Fastest - no installs, runs the nightly build from the image
+- **Only `server_repo` specified**: Medium - builds server only, skips frontend (ideal for backend testing)
+- **Both specified**: Slowest - builds both server and frontend from source (full development mode)
+
+**Tip**: Leave `frontend_repo` empty when only testing backend features to significantly reduce startup time!
+
+### Safe Mode
+
+- Set `safe_mode: true` if you need to start Music Assistant without loading providers
+- Useful for debugging any startup issues
+
+### Pull Request Syntax
+
+When specifying a pull request, use `pr-NUMBER` (e.g., `pr-123`, `pr-456`). The App will automatically fetch and checkout the PR for you.
+
+## Troubleshooting
+
+### App won't start
+
+1. Check the App logs for build errors
+2. Verify the branch/PR/fork exists and is accessible
+3. Try using a known-good branch like `dev` or `main`
+4. Enable `safe_mode: true` to bypass provider loading
+
+### Build failures
+
+- Ensure the specified Git reference exists - the log names the repository and reference it could not reach
+- Check if there are dependency conflicts in the branch
+- Frontend build requires Node.js - build failures may indicate incompatible frontend code
+
+### Performance issues
+
+- Building from source uses more resources
+- Only use this App for development testing, not as a daily driver
+
+## Developer Workflow
+
+### Testing a PR
+
+1. Find the PR number (e.g., #456)
+2. Configure: `server_repo: pr-456`
+3. Restart the App
+4. Test the changes
+
+### Developing Features
+
+1. Push your branch to your fork
+2. Configure: `server_repo: yourusername/server@your-branch`
+3. Restart the App
+4. Test and iterate
+
+### Testing Both Server and Frontend Changes
+
+```yaml
+server_repo: pr-456
+frontend_repo: pr-789
+```
+
+This allows you to test coordinated changes across both repositories.
 
 ## Support
 
-If you encounter any issues:
+This is a developer tool and is not supported for regular users. If you encounter issues:
 
-1. Check the App logs (available in the Home Assistant App page)
-2. Visit the [documentation](https://music-assistant.io)
-3. Search existing issues at [music-assistant/support](https://github.com/music-assistant/support)
-4. Ask for help on [Discord](https://discord.gg/PZQ6RWbfeS) or [GitHub Discussions](https://github.com/orgs/music-assistant/discussions)
+- Check the App logs
+- Verify your Git references are correct
+- Test with the default branches first
+- Ask in the Music Assistant developer Discord channel
 
-## Updates
+## Differences from Regular App
 
-This is the **stable** channel. Updates are released after thorough testing and are recommended for everyday use.
+| Feature      | Regular App       | DEV App (Nightly mode)    | DEV App (Source mode)    |
+| ------------ | ----------------- | ------------------------- | ------------------------ |
+| Installation | Pre-built release | Nightly build in the image | Built from source        |
+| Startup time | Fast              | Fast                      | Slower (build time)      |
+| Stability    | Stable releases   | Nightly builds            | Development code         |
+| Frontend     | Bundled           | Bundled                   | Built from source        |
+| Updates      | Automatic         | Manual (restart)          | Manual (change config)   |
+| Use case     | Production        | Quick backend testing     | Full development/testing |
 
-### Update Frequency
-
-- Major releases: Every few months (more or less once per quarter)
-- Bug fixes: As needed
-- Security updates: Immediately
-
-## Version Information
-
-This App uses stable releases of Music Assistant. For the latest features, consider the BETA or NIGHTLY versions (use at your own risk).
-
-## Data Storage
-
-All Music Assistant data is stored within the App's data directory:
-
-- Music library database
-- Configuration settings
-
-Making a backup of the Music Assistant App within Home Assistant will therefore also include your Music Assistant data. Please ensure to always make a backup before updating to a new version so you can always easily revert to the previous version!
-
-## Performance Tips
-
-- Use a fast storage medium (SSD recommended)
-- Ensure adequate RAM (minimum 4GB for Home Assistant + this App)
-- Keep your Music Assistant instance updated
-
-## Contributing
-
-Music Assistant is open source! Contributions are welcome:
-
-- 🐛 [Report bugs](https://github.com/music-assistant/support)
-- 💡 [Suggest features](https://github.com/orgs/music-assistant/discussions)
-- 🔧 Submit pull requests
-- 📝 Improve documentation
-
-Visit the [Music Assistant organization](https://github.com/music-assistant) on GitHub to contribute.
-
-## License
-
-Music Assistant is licensed under the Apache License 2.0.
+**Configuration Modes:**
+- **Fast mode**: Both repos empty - Runs the nightly build from the image, no installs
+- **Backend dev mode**: Only `server_repo` specified - Builds server, uses bundled frontend
+- **Full dev mode**: Both repos specified - Builds everything from source
